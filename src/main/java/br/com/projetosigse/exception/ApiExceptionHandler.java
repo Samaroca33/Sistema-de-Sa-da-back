@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.Map;
@@ -29,6 +30,15 @@ public class ApiExceptionHandler {
                 .map(err -> err.getField() + ": " + err.getDefaultMessage())
                 .collect(Collectors.joining("; "));
         return erro(HttpStatus.BAD_REQUEST, detalhe);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> tipoInvalido(MethodArgumentTypeMismatchException ex) {
+        String nome = ex.getName();
+        String valor = ex.getValue() == null ? "null" : ex.getValue().toString();
+        String tipoEsperado = ex.getRequiredType() == null ? "valor" : ex.getRequiredType().getSimpleName();
+        String mensagem = String.format("Parâmetro '%s' deve ser um %s. Valor recebido: '%s'.", nome, tipoEsperado, valor);
+        return erro(HttpStatus.BAD_REQUEST, mensagem);
     }
 
     private ResponseEntity<Map<String, Object>> erro(HttpStatus status, String mensagem) {
